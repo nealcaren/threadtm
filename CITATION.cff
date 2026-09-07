@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use ThreadTM, please cite the paper and the software."
+title: "ThreadTM: a reply-threaded topic model"
+authors:
+  - family-names: Caren
+    given-names: Neal
+repository-code: "https://github.com/nealcaren/threadtm"
+license: Apache-2.0
+version: 0.1.0
+abstract: >-
+  ThreadTM is a reply-threaded topic model: a logistic-normal topic model whose
+  per-document prior is coupled along the reply tree, so a reply's topics are
+  smoothed toward the comment it answers. This package is the standalone
+  distribution of the model, whose numerical core is implemented and tested in
+  the topica library.
+references:
+  - type: software
+    title: "topica"
+    authors:
+      - family-names: Caren
+        given-names: Neal
+    repository-code: "https://github.com/nealcaren/topica"
+    notes: "ThreadTM's numerical core; this package pins topica 0.58."

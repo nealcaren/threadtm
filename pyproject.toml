@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "threadtm"
+version = "0.1.0"
+description = "ThreadTM: a reply-threaded topic model (standalone distribution of the topica model)."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Neal Caren" }]
+keywords = ["topic-modeling", "reply-tree", "threaded-discussion", "nlp", "text-analysis"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+]
+# ThreadTM's numerical core is the topica Rust library. We pin the release the
+# paper validated on: reproducibility is this package's job, so the pin is tight
+# and bumped deliberately, not floated.
+dependencies = ["topica==0.58.*"]
+
+[project.optional-dependencies]
+# The reply_completion evaluation fits off-the-shelf comparators (STM, RTM, LDA)
+# that already ship in topica; no extra install is needed for it. This extra
+# pulls topica's plotting stack for the paper's figures.
+viz = ["topica[viz]==0.58.*"]
+test = ["pytest>=7"]
+
+[project.urls]
+Homepage = "https://github.com/nealcaren/threadtm"
+Repository = "https://github.com/nealcaren/threadtm"
+Issues = "https://github.com/nealcaren/threadtm/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/threadtm"]

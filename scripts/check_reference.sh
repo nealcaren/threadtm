@@ -16,10 +16,11 @@ if [ ! -d "$TOPICA/.git" ]; then
   exit 1
 fi
 
-# Default ref: the commit recorded in PROVENANCE.md.
+# Default ref: the tag matching the EXACT version pinned in pyproject.toml, so
+# this check verifies the snapshot against the code the package actually installs.
 REF="${2:-}"
 if [ -z "$REF" ]; then
-  REF="$(grep -oE 'commit [0-9a-f]{7,40}' "$DEST/PROVENANCE.md" | awk '{print $2}' | head -1)"
+  REF="v$("$HERE/scripts/pinned_topica.sh")"
 fi
 SHA="$(git -C "$TOPICA" rev-parse "$REF")"
 

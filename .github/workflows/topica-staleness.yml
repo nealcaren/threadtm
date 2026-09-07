@@ -1,0 +1,53 @@
+name: topica-staleness
+
+# Notify (via an issue) when topica ships a release newer than the one this
+# package pins. This does NOT bump anything automatically: pin bumps are
+# deliberate and go through RELEASING.md. It only surfaces that a newer topica
+# exists so a maintainer can decide whether ThreadTM changed.
+
+on:
+  schedule:
+    - cron: "0 13 * * 1"   # Mondays, 13:00 UTC
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare pinned vs latest topica
+        id: cmp
+        run: |
+          PINNED="$(bash scripts/pinned_topica.sh)"
+          LATEST="$(python -c "import json,urllib.request; print(json.load(urllib.request.urlopen('https://pypi.org/pypi/topica/json'))['info']['version'])")"
+          echo "pinned=$PINNED"  >> "$GITHUB_OUTPUT"
+          echo "latest=$LATEST"  >> "$GITHUB_OUTPUT"
+          if [ "$PINNED" = "$LATEST" ]; then echo "stale=false" >> "$GITHUB_OUTPUT"; else echo "stale=true" >> "$GITHUB_OUTPUT"; fi
+      - name: Open or update tracking issue
+        if: steps.cmp.outputs.stale == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PINNED: ${{ steps.cmp.outputs.pinned }}
+          LATEST: ${{ steps.cmp.outputs.latest }}
+        run: |
+          TITLE="topica $LATEST is available (pinned: $PINNED)"
+          EXISTING="$(gh issue list --state open --label topica-bump --json title --jq '.[].title' | grep -Fx "$TITLE" || true)"
+          if [ -n "$EXISTING" ]; then echo "issue already open"; exit 0; fi
+          gh label create topica-bump --color BFD4F2 --description "Pinned topica is behind a release" 2>/dev/null || true
+          gh issue create --label topica-bump --title "$TITLE" --body "$(cat <<EOF
+          topica **$LATEST** is on PyPI; this package pins **$PINNED**.
+
+          Decide whether to bump. If ThreadTM's source changed, follow
+          \`RELEASING.md\`: bump the pin in \`pyproject.toml\`, re-run
+          \`scripts/vendor_reference.sh\`, and confirm \`scripts/check_reference.sh\`
+          passes. If only unrelated topica code changed, you may bump the pin (and
+          re-vendor) or leave it; the reference-sync check will keep the snapshot
+          honest either way.
+
+          Compare: https://github.com/nealcaren/topica/compare/v$PINNED...v$LATEST
+          EOF
+          )"

@@ -19,16 +19,19 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Text Processing :: Linguistic",
 ]
-# ThreadTM's numerical core is the topica Rust library. We pin the release the
-# paper validated on: reproducibility is this package's job, so the pin is tight
-# and bumped deliberately, not floated.
-dependencies = ["topica==0.58.*"]
+# ThreadTM's numerical core is the topica Rust library. We pin an EXACT release:
+# reproducibility is this package's job, and the reference snapshot in
+# reference_implementation/ can only be provably identical to a single version,
+# not a range. This pin is the single source of truth for the whole repo (the
+# reference-sync check and CI both read it), and it is bumped deliberately via
+# the procedure in RELEASING.md, never floated.
+dependencies = ["topica==0.58.0"]
 
 [project.optional-dependencies]
 # The reply_completion evaluation fits off-the-shelf comparators (STM, RTM, LDA)
 # that already ship in topica; no extra install is needed for it. This extra
 # pulls topica's plotting stack for the paper's figures.
-viz = ["topica[viz]==0.58.*"]
+viz = ["topica[viz]==0.58.0"]
 test = ["pytest>=7"]
 
 [project.urls]

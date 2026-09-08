@@ -30,8 +30,8 @@ ThreadTM's headline diagnostic is **reply persistence**: how strongly a reply's
 topic mix tracks the comment it answers. This example fits ThreadTM to two
 subreddits from
 [ConvoKit's `reddit-corpus-small`](https://convokit.cornell.edu/documentation/reddit-small.html)
-and shows that persistence is not a constant of the model but a measurable
-property of a community's discourse. The full script is
+and shows that persistence is a measurable property of a community's discourse,
+not a fixed feature of the model. The full script is
 [`examples/convokit_reddit.py`](examples/convokit_reddit.py); it downloads the
 corpus once and turns each conversation's reply tree into `(docs, parents)`. The
 core of it:
@@ -83,12 +83,12 @@ difference at all, because it never looks at who replied to whom.
 
 | Name | What it does |
 |------|--------------|
-| `ThreadTM`             | the model — `fit`, `transform`, `top_words`, `persistence` |
+| `ThreadTM`             | the model: `fit`, `transform`, `top_words`, `persistence` |
 | `Corpus`               | topica's corpus container, for building input |
 | `reply_completion`     | held-out reply-completion evaluation (fits STM / RTM / LDA baselines) |
 | `prevalence_ci` / `group_prevalence_ci` | prevalence confidence intervals |
 
-Reduced-form persistence and prevalence standard errors are read off a fitted
+Read reduced-form persistence and prevalence standard errors off a fitted
 model: `model.persistence()` and `model.prevalence_se`.
 
 ---

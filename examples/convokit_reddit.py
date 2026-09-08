@@ -10,8 +10,7 @@ depend on it.) The corpus downloads once to ~/.convokit on first run.
 import re
 from collections import defaultdict, deque
 from convokit import Corpus, download
-import topica
-topica.enable_experimental()
+import threadtm
 
 DEAD = {"", "[deleted]", "[removed]"}
 MAX_DOCS = 4000
@@ -19,7 +18,7 @@ URL = re.compile(r"https?://\S+|www\.\S+")
 # Reddit markup + contraction remnants that survive apostrophe-splitting.
 EXTRA_STOP = {"amp", "gt", "lt", "don", "isn", "doesn", "didn", "wasn",
               "aren", "wouldn", "couldn", "shouldn", "won", "ve", "ll", "re"}
-STOP = set(topica.ENGLISH_STOPWORDS) | EXTRA_STOP
+STOP = set(threadtm.ENGLISH_STOPWORDS) | EXTRA_STOP
 
 corpus = Corpus(filename=download("reddit-corpus-small"))
 
@@ -75,13 +74,13 @@ for convo in convos:
         n += 1
 
 # Tokenize with English stopwords -> list of token lists.
-docs = [topica.tokenize(URL.sub(" ", t), stopwords=STOP,
-                        token_regex=r"[a-zA-Z]+", min_length=3)
+docs = [threadtm.tokenize(URL.sub(" ", t), stopwords=STOP,
+                          token_regex=r"[a-zA-Z]+", min_length=3)
         for t in texts]
 roots = sum(1 for p in parents if p == -1)
 print(f"{len(docs)} docs, {roots} thread roots, {len(docs)-roots} replies")
 
-model = topica.ThreadTM(num_topics=8, em_iters=120, seed=13)
+model = threadtm.ThreadTM(num_topics=8, em_iters=120, seed=13)
 model.fit(docs, parents=parents, min_count=5)
 
 print("\nTopics (top words):")

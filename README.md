@@ -34,12 +34,11 @@ corpus once, turns each conversation's reply tree into `(docs, parents)`, and
 fits an 8-topic model. The core of it:
 
 ```python
-import topica
-topica.enable_experimental()
+import threadtm
 
 # docs: list of token lists.  parents[d]: row index of d's parent (-1 = root),
 # built from each ConvoKit conversation's reply tree (see the full script).
-model = topica.ThreadTM(num_topics=8, em_iters=120, seed=13)
+model = threadtm.ThreadTM(num_topics=8, em_iters=120, seed=13)
 model.fit(docs, parents=parents, min_count=5)
 
 for k in range(model.num_topics):

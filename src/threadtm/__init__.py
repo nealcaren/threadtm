@@ -20,13 +20,18 @@ topica release, so what you import here is exactly what topica ships and tests.
 Public surface
 --------------
 - :class:`ThreadTM`            the model (fit / transform / persistence)
-- :class:`Corpus`              topica's corpus container, for building input
+- :class:`Corpus`              corpus container, for building input
+- :func:`tokenize`            turn raw text into a token list
+- :data:`ENGLISH_STOPWORDS`   default English stopword set for ``tokenize``
 - :func:`reply_completion`     the held-out reply-completion evaluation
 - :func:`prevalence_ci`        prevalence confidence intervals
 - :func:`group_prevalence_ci`  per-group prevalence confidence intervals
 
 Reduced-form persistence and prevalence standard errors are reached through a
 fitted model: ``model.persistence()`` and ``model.prevalence_se``.
+
+This surface is everything an end-to-end reply-threaded workflow needs, so user
+code imports ``threadtm`` and never reaches back into topica directly.
 """
 
 from __future__ import annotations
@@ -40,6 +45,8 @@ _topica.enable_experimental()
 from topica import (  # noqa: E402  (import after the experimental gate is set)
     ThreadTM,
     Corpus,
+    tokenize,
+    ENGLISH_STOPWORDS,
     prevalence_ci,
     group_prevalence_ci,
 )
@@ -53,6 +60,8 @@ __version__ = "0.1.0"
 __all__ = [
     "ThreadTM",
     "Corpus",
+    "tokenize",
+    "ENGLISH_STOPWORDS",
     "reply_completion",
     "prevalence_ci",
     "group_prevalence_ci",

@@ -24,54 +24,60 @@ print(model.persistence())     # how strongly replies track their parent
 pip install threadtm
 ```
 
-## Worked example: real Reddit threads
+## Worked example: reply persistence differs by subreddit
 
-This fits ThreadTM to a real threaded corpus,
+ThreadTM's headline diagnostic is **reply persistence**: how strongly a reply's
+topic mix tracks the comment it answers. This example fits ThreadTM to two
+subreddits from
 [ConvoKit's `reddit-corpus-small`](https://convokit.cornell.edu/documentation/reddit-small.html)
-(297k comments across 100 subreddits). The full script is
+and shows that persistence is not a constant of the model but a measurable
+property of a community's discourse. The full script is
 [`examples/convokit_reddit.py`](examples/convokit_reddit.py); it downloads the
-corpus once, turns each conversation's reply tree into `(docs, parents)`, and
-fits an 8-topic model. The core of it:
+corpus once and turns each conversation's reply tree into `(docs, parents)`. The
+core of it:
 
 ```python
 import threadtm
 
 # docs: list of token lists.  parents[d]: row index of d's parent (-1 = root),
-# built from each ConvoKit conversation's reply tree (see the full script).
-model = threadtm.ThreadTM(num_topics=8, em_iters=120, seed=13)
+# built from each subreddit's reply trees (see the full script).
+model = threadtm.ThreadTM(num_topics=15, em_iters=100, seed=13)
 model.fit(docs, parents=parents, min_count=5)
 
-for k in range(model.num_topics):
-    print(k, " ".join(model.top_words(8, topic=k)))
-
-print(model.persistence(bootstrap=300))   # how strongly replies track parents
+print(model.persistence(bootstrap=200))   # how strongly replies track parents
 ```
 
 Running it (`pip install convokit`, then `python examples/convokit_reddit.py`)
-on 4,000 documents from 113 threads produces, verbatim:
+produces, verbatim:
 
 ```
-4000 docs, 113 thread roots, 3887 replies
+r/askscience: 3161 docs, 73 threads, K=15
+  reply persistence: 0.567 (95% CI 0.528-0.600)
+  sample topics:
+    0: matter fish water chlorine like pool bucket one
+    1: ground air lightning earth water force moving going
+    2: light see years away universe black speed space
+    3: time infinite one value point like sum finite
+    4: aircraft missile pilot radar plane pilots target system
 
-Topics (top words):
-  0: one like police good need nuclear time two
-  1: like one think time trump people see know
-  2: government like canada insurance free one people need
-  3: slavery bible people think like slave one women
-  4: people like one think thread religious sub states
-  5: like one good great really use know brush
-  6: mainstream say cars people god ball think becoming
-  7: game like new make people diablo games play
-
-Reply persistence: 0.473 (95% CI 0.415-0.529)
+r/AskReddit: 4525 docs, 94 threads, K=15
+  reply persistence: 0.418 (95% CI 0.371-0.455)
+  sample topics:
+    0: god people jesus old one like bible think
+    1: people love why like god mean free make
+    2: one fire town photos people see mine like
+    3: like really people sorry something one thank still
+    4: school time never love years one got high
 ```
 
-The topics are recognizable slices of a general-Reddit sample (politics/Trump,
-Canadian health insurance, a religion/slavery debate, gaming/Diablo). The
-**reply persistence** of 0.473 is ThreadTM's headline diagnostic: a reply's
-topic mix tracks the comment it answers about halfway, well above zero and
-tightly estimated. That coupling is exactly what a flat (non-threaded) topic
-model throws away.
+Both subreddits yield recognizable topics at K=15 (physics, cosmology, and math
+in r/askscience; religion, life stories, and photos in r/AskReddit), so the
+model is not starved at this size. The **persistence gap is the point**: in
+r/askscience, a focused technical Q&A, answers stay tightly on the question that
+prompted them (**0.567**); in r/AskReddit, an open-prompt sub of anecdotes and
+tangents, replies drift much further from their parent (**0.418**), and the two
+confidence intervals do not overlap. A flat (non-threaded) topic model sees no
+difference at all, because it never looks at who replied to whom.
 
 ## Public surface
 

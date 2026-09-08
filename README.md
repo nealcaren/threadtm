@@ -24,55 +24,74 @@ print(model.persistence())     # how strongly replies track their parent
 pip install threadtm
 ```
 
-## What this package is (and where the code lives)
+## Worked example: real Reddit threads
 
-ThreadTM's numerical core is implemented and tested in
-[**topica**](https://github.com/nealcaren/topica), a Rust-backed topic-modeling
-library. This package is ThreadTM's **standalone distribution**: it pins the
-validated topica release, opens topica's experimental gate for you at import,
-and exposes only the reply-threaded surface, so ThreadTM reads as a single model
-rather than one entry in a large model set.
+This fits ThreadTM to a real threaded corpus,
+[ConvoKit's `reddit-corpus-small`](https://convokit.cornell.edu/documentation/reddit-small.html)
+(297k comments across 100 subreddits). The full script is
+[`examples/convokit_reddit.py`](examples/convokit_reddit.py); it downloads the
+corpus once, turns each conversation's reply tree into `(docs, parents)`, and
+fits an 8-topic model. The core of it:
 
-We state the dependency plainly because it is a strength: the math ThreadTM runs
-on is a maintained, separately tested library, not one-off code bundled with a
-paper. What you `import threadtm` and run is exactly the pinned topica release.
+```python
+import topica
+topica.enable_experimental()
 
-For reviewers who want to **read** the model rather than run it,
-[`reference_implementation/`](reference_implementation/) holds an attributed,
-three-file snapshot of the source:
+# docs: list of token lists.  parents[d]: row index of d's parent (-1 = root),
+# built from each ConvoKit conversation's reply tree (see the full script).
+model = topica.ThreadTM(num_topics=8, em_iters=120, seed=13)
+model.fit(docs, parents=parents, min_count=5)
 
-| File | What it is |
-|------|------------|
-| `thread_tm.rs`          | the model — variational EM, logistic-normal per-document bound |
-| `thread_tm_bindings.rs` | the Python (PyO3) bindings |
-| `tree_field.rs`         | the Gaussian tree-field prior over the reply tree |
+for k in range(model.num_topics):
+    print(k, " ".join(model.top_words(8, topic=k)))
 
-That snapshot is kept honest by `scripts/check_reference.sh`, which re-derives
-the files from the pinned topica tag and fails if they have drifted.
+print(model.persistence(bootstrap=300))   # how strongly replies track parents
+```
+
+Running it (`pip install convokit`, then `python examples/convokit_reddit.py`)
+on 4,000 documents from 113 threads produces, verbatim:
+
+```
+4000 docs, 113 thread roots, 3887 replies
+
+Topics (top words):
+  0: one like police good need nuclear time two
+  1: like one think time trump people see know
+  2: government like canada insurance free one people need
+  3: slavery bible people think like slave one women
+  4: people like one think thread religious sub states
+  5: like one good great really use know brush
+  6: mainstream say cars people god ball think becoming
+  7: game like new make people diablo games play
+
+Reply persistence: 0.473 (95% CI 0.415-0.529)
+```
+
+The topics are recognizable slices of a general-Reddit sample (politics/Trump,
+Canadian health insurance, a religion/slavery debate, gaming/Diablo). The
+**reply persistence** of 0.473 is ThreadTM's headline diagnostic: a reply's
+topic mix tracks the comment it answers about halfway, well above zero and
+tightly estimated. That coupling is exactly what a flat (non-threaded) topic
+model throws away.
 
 ## Public surface
 
 | Name | What it does |
 |------|--------------|
-| `ThreadTM`             | the model — `fit`, `transform`, `persistence` |
+| `ThreadTM`             | the model — `fit`, `transform`, `top_words`, `persistence` |
 | `Corpus`               | topica's corpus container, for building input |
-| `reply_completion`     | held-out reply-completion evaluation (fits STM / RTM / LDA baselines from topica) |
-| `prevalence_ci`        | prevalence confidence intervals |
-| `group_prevalence_ci`  | per-group prevalence confidence intervals |
+| `reply_completion`     | held-out reply-completion evaluation (fits STM / RTM / LDA baselines) |
+| `prevalence_ci` / `group_prevalence_ci` | prevalence confidence intervals |
 
 Reduced-form persistence and prevalence standard errors are read off a fitted
 model: `model.persistence()` and `model.prevalence_se`.
 
-## Reproducibility
+---
 
-The dependency is pinned to `topica==0.58.*`, the release ThreadTM was validated
-on. The pin is tight by design and bumped deliberately; results reproduce
-against the pinned core.
-
-## Citation
-
-See [`CITATION.cff`](CITATION.cff).
-
-## License
-
-Apache-2.0.
+ThreadTM's numerical core is the [topica](https://github.com/nealcaren/topica)
+library; this package pins an exact validated release (`topica==0.58.0`) and
+re-exports only the reply-threaded surface. What you `import threadtm` and run is
+exactly that release; an attributed source snapshot for reading lives in
+[`reference_implementation/`](reference_implementation/) and is kept in sync by
+`scripts/check_reference.sh` (see [`RELEASING.md`](RELEASING.md)). Apache-2.0;
+please cite via [`CITATION.cff`](CITATION.cff).
